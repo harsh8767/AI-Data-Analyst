@@ -344,22 +344,21 @@ http://localhost:8501
 
 ## Application Interface
 
-```text
-images/app-dashboard..png
-```
+<p align="center">
+  <img src="./images/app-dashboard.png" alt="Application Interface" width="900"/>
+</p>
 
 ## Analysis Example
 
-```text
-images/data-analysis.png
-```
+<p align="center">
+  <img src="./images/data-analysis.png" alt="Analysis Example" width="900"/>
+</p>
 
 ## PDF Report Download
 
-```text
-images/pdf-report.png
-```
-
+<p align="center">
+  <img src="./images/pdf-report.png" alt="PDF Report" width="900"/>
+</p>
 ---
 
 # 📄 Sample Report
