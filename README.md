@@ -1,381 +1,244 @@
 # 📊 AI Data Analyst
 
-> An AI-powered data analysis application that allows users to upload CSV/Excel datasets, ask questions in natural language, generate automated analysis and visualizations, and export complete session reports as PDF.
+> An end-to-end AI-powered data analysis application that allows users to upload CSV or Excel datasets, ask questions in natural language, generate structured analysis plans, execute data analysis locally, create visualizations and AI insights, and export complete analysis sessions as PDF reports.
 
-![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)
-![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)
-![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)
-![License](https://img.shields.io/badge/License-MIT-green)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python" alt="Python"/>
+  <img src="https://img.shields.io/badge/Streamlit-App-red?logo=streamlit" alt="Streamlit"/>
+  <img src="https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas" alt="Pandas"/>
+  <img src="https://img.shields.io/badge/Plotly-Visualization-3F4F75?logo=plotly" alt="Plotly"/>
+  <img src="https://img.shields.io/badge/Google%20Gemini-AI%20Analysis-4285F4?logo=google" alt="Google Gemini"/>
+  <img src="https://img.shields.io/badge/ReportLab-PDF%20Reports-orange" alt="ReportLab"/>
+</p>
 
+---
 
-An end-to-end AI Data Analyst application that allows users to upload CSV or Excel datasets and analyze them using natural-language questions.
+# 📌 Overview
 
-The project combines Python, Pandas, Streamlit, Google Gemini, Plotly, and ReportLab to provide an interactive workflow for dataset exploration, AI-assisted analysis, automatic visualization, insights, and PDF reporting.
+AI Data Analyst is an end-to-end data analysis application that allows users to upload CSV or Excel datasets and analyze them using natural-language questions.
 
-🚀 Project Demo
+The project combines Python, Pandas, Streamlit, Google Gemini, Plotly, and ReportLab to provide an interactive workflow for dataset exploration, AI-assisted analysis, automatic visualization, analytical insights, session history, and PDF reporting.
 
-🖥️ Interactive Streamlit Application
+Instead of manually writing Pandas code or SQL queries, users can interact with their datasets using plain English.
 
-The application allows users to upload a dataset and ask questions in plain English.
+### Example Questions
 
-Dataset Upload
-      │
-      ▼
-Dataset Overview & Data Quality
-      │
-      ▼
-Natural-Language Question
-      │
-      ▼
-AI Analysis Plan
-      │
-      ▼
-Query Execution
-      │
-      ▼
-Validated Result
-      │
- ┌────┴───────────────┐
- ▼                    ▼
-Visualization       AI Insight
- │                    │
- └─────────┬──────────┘
-           ▼
-     Session History
-           │
-           ▼
-      PDF Report
+- What are the top 5 products by sales?
+- Which region has the highest profit?
+- What is the total sales?
+- Which category generates the most profit?
+- Show sales by region.
 
-📌 Overview
+The AI converts the user's natural-language question into a structured analysis plan. The application then executes that plan against the uploaded dataset and presents the validated result.
 
-Traditional data analysis often requires users to write code or SQL queries before they can answer simple questions about a dataset.
+---
 
-This project provides a natural-language interface where users can ask questions such as:
+# 🚀 Features
 
-What are the top 5 products by sales?
+### 📂 Dataset Upload
 
-Which region has the highest profit?
+- CSV support
+- Excel (.xlsx, .xls) support
+- Automatic dataset loading
+- Dataset change detection
 
-What is the total revenue?
+### 📊 Dataset Overview
 
-Which category performs best?
+- Total rows
+- Total columns
+- Missing cell count
+- Duplicate row count
 
-Show sales by region.
+### 🔍 Data Preview
 
-The AI converts the user's question into a structured analysis plan. The application then executes that plan against the uploaded dataset and presents the result without requiring the user to write Pandas code.
+- Interactive table preview
+- View first 100 rows
+- Scrollable dataset inspection
 
-⭐ Project Highlights
+### 📋 Column Intelligence
 
-🤖 Natural-language data analysis
+Automatic identification of:
 
-📂 CSV and Excel dataset upload
+- Numerical columns
+- Categorical columns
+- Date columns
 
-📊 Automatic dataset overview
+### 🧹 Data Quality Analysis
 
-🔍 Dataset preview
+- Missing value detection
+- Missing percentage calculation
+- Data quality summary
 
-📋 Automatic column-type detection
+### 🤖 Natural Language Analytics
 
-🧹 Missing-value and data-quality analysis
+Users can ask questions in plain English.
 
-🧠 AI-generated analysis plans
+Examples:
 
-⚙️ Programmatic query execution
+```text
+What are the top 10 products by sales?
 
-✅ Result validation
+Which region generated the highest profit?
 
-📈 Automatic Plotly visualizations
+Show sales by category.
 
-💡 AI-generated insights
+What is the average discount?
 
-📚 Session analysis history
+Which customer segment contributes the most revenue?
+```
 
-📄 Multi-question PDF session reports
+### 🧠 AI Analysis Planning
 
-🔐 Environment-variable based API configuration
+Google Gemini generates:
 
-⚡ Cached repeated analysis-plan requests
+- Structured analysis plan
+- Aggregation strategy
+- Filtering logic
+- Sorting instructions
+- Visualization recommendation
 
-🛡️ Safe handling of local secrets and generated files with .gitignore
+### ⚙️ Local Query Execution
 
-📸 Project Preview
+The generated plan is executed locally using Pandas.
 
-Main Application
+Benefits:
 
+- Faster execution
+- Lower API usage
+- Better privacy
+- Reproducible results
 
+### 📈 Automatic Visualizations
 
-Analysis Result
+Supported visualizations include:
 
+- Bar charts
+- Line charts
+- Pie charts
+- Scatter plots
 
+Generated automatically based on AI recommendations.
 
-Session Report
+### 💡 AI Insights
 
+The application generates analytical insights explaining:
 
+- Key trends
+- Significant observations
+- Business implications
+- Important findings
 
-✨ Features
+### 📚 Session History
 
-📂 Dataset Upload
+The application maintains:
 
-Users can upload:
+- Question history
+- Results
+- Charts
+- Insights
 
-CSV files
+for the currently uploaded dataset.
 
-Excel .xlsx files
+### 📄 PDF Report Generation
 
-Excel .xls files
+Generate a professional PDF report containing:
 
-The uploaded dataset is loaded and prepared for analysis.
+- All session questions
+- Results
+- Visualizations
+- AI insights
 
-📊 Dataset Overview
+---
 
-The application displays important dataset statistics including:
+# 🏗️ Application Workflow
 
-Number of rows
+```text
+1. Upload Dataset
+          │
+          ▼
+2. Dataset Overview
+          │
+          ▼
+3. Ask Question
+          │
+          ▼
+4. Gemini Generates Analysis Plan
+          │
+          ▼
+5. Execute Analysis Locally
+          │
+          ▼
+6. Validate Result
+          │
+          ▼
+7. Generate Visualization
+          │
+          ▼
+8. Generate Insight
+          │
+          ▼
+9. Save Session History
+          │
+          ▼
+10. Export PDF Report
+```
 
-Number of columns
+---
 
-Missing cells
+# 🧠 AI Integration
 
-Duplicate rows
+The application uses Google Gemini for:
 
-A preview of the dataset is also available directly in the application.
+### Analysis Planning
 
-📋 Column Information
+Input:
 
-The application automatically categorizes columns into:
+- Dataset metadata
+- User question
 
-Numerical columns
+Output:
 
-Categorical columns
+- Analysis plan
+- Visualization plan
 
-Date columns
+### Insight Generation
 
-This provides a quick understanding of the structure of an uploaded dataset.
+Input:
 
-🧹 Data Quality
+- User question
+- Analysis result
 
-The application checks the dataset for missing values and displays missing-value information by column.
+Output:
 
-This gives users a quick view of potential data-quality issues before asking analytical questions.
+- Human-readable analytical insight
 
-🤖 Natural-Language Analysis
+### API Optimization
 
-Users can ask questions about their dataset using plain English.
+The application minimizes Gemini usage by:
 
-Example:
+- Caching repeated analysis-plan requests
+- Generating local insights for simple metrics
+- Executing data operations locally
 
-What are the top 5 products by revenue?
+---
 
-The AI generates a structured analysis plan based on the dataset and the user's question.
+# 🛠️ Tech Stack
 
-🧠 AI Analysis Planning
+| Component | Technology |
+|------------|------------|
+| Frontend | Streamlit |
+| Data Processing | Pandas |
+| AI Model | Google Gemini |
+| Visualization | Plotly |
+| PDF Generation | ReportLab |
+| Environment Variables | python-dotenv |
+| Spreadsheet Support | OpenPyXL |
 
-The AI does not directly modify the dataset.
+---
 
-Instead, it generates a structured plan that describes the required analysis.
+# 📂 Project Structure
 
-The application then executes the plan using the local dataset.
-
-This separates:
-
-Natural Language Understanding
-            ↓
-      Analysis Plan
-            ↓
-     Local Execution
-            ↓
-       Result
-
-⚙️ Query Execution
-
-The generated analysis plan is passed to the query-execution layer.
-
-The result is then validated before being displayed to the user.
-
-This provides a controlled workflow between AI-generated instructions and dataset operations.
-
-📈 Automatic Visualization
-
-For suitable multi-row analysis results, the application can automatically generate a Plotly visualization based on the AI-generated visualization plan.
-
-Single-value results are displayed as metrics instead of unnecessary charts.
-
-💡 AI Insights
-
-The application provides an insight for the analysis result.
-
-For simple single-value results, a local insight is generated without making another AI request.
-
-For more complex results, an AI-generated insight is provided.
-
-📚 Session Analysis History
-
-Successful analyses are stored in the current Streamlit session.
-
-The history contains:
-
-Question
-
-Analysis result
-
-Visualization
-
-Insight
-
-Analysis plan
-
-Visualization plan
-
-The history is cleared when the Streamlit session is restarted or a different dataset is uploaded.
-
-📄 PDF Session Report
-
-The application can generate one PDF report containing all analyses from the current dataset session.
-
-The report includes:
-
-Dataset name
-
-Number of analyzed questions
-
-Each question
-
-Analysis result
-
-Visualization when available
-
-AI insight
-
-This makes it possible to export a complete analysis session instead of downloading individual results.
-
-🧪 Example Dataset
-
-The repository includes sample datasets for demonstrating the application.
-
-Superstore
-
-A Superstore dataset can be used for questions such as:
-
-What are the top 5 products by sales?
-
-Which region has the highest profit?
-
-What is the total sales?
-
-Which category generates the most profit?
-
-Show sales by region.
-
-HR Employee Attrition
-
-The repository also contains an HR employee attrition dataset for testing analysis across a different type of dataset.
-
-🧠 Application Workflow
-
-Upload CSV / Excel
-        │
-        ▼
-Load Dataset
-        │
-        ▼
-Dataset Summary
-        │
-        ├── Column Types
-        ├── Missing Values
-        └── Data Preview
-        │
-        ▼
-Ask Natural-Language Question
-        │
-        ▼
-Google Gemini
-        │
-        ▼
-Analysis Plan + Chart Plan
-        │
-        ▼
-Query Executor
-        │
-        ▼
-Result Validator
-        │
-        ▼
-Analysis Result
-        │
- ┌──────┴─────────┐
- ▼                ▼
-Plotly Chart    AI Insight
- └──────┬─────────┘
-        ▼
-Session History
-        │
-        ▼
-PDF Session Report
-
-🔌 AI Integration
-
-The application uses Google Gemini for two main tasks:
-
-1. Analysis Planning
-
-Gemini interprets the user's natural-language question and generates:
-
-Analysis plan
-
-Visualization plan
-
-The analysis plan is then executed locally.
-
-2. Result Insights
-
-For complex analysis results, Gemini generates a concise analytical insight based on the user's question and the returned result.
-
-Repeated analysis-plan requests are cached using Streamlit caching to avoid unnecessary repeated requests during the session.
-
-🛠️ Tech Stack
-
-Category
-
-Technology
-
-🐍 Programming Language
-
-Python
-
-📊 Data Processing
-
-Pandas
-
-🖥️ Web Application
-
-Streamlit
-
-🤖 AI Analysis
-
-Google Gemini
-
-📈 Visualization
-
-Plotly
-
-📄 PDF Generation
-
-ReportLab
-
-🔐 Configuration
-
-Environment Variables
-
-🔧 Version Control
-
-Git
-
-☁️ Repository
-
-GitHub
-
-📂 Project Structure
-
+```text
 AI-Data-Analyst/
 │
 ├── app/
@@ -391,8 +254,8 @@ AI-Data-Analyst/
 │
 ├── images/
 │   ├── ai_data_analyst_app.png
-│   ├── ai_data_analyst_result.png
-│   └── ai_data_analyst_report.png
+│   ├── sample_analysis.png
+│   └── sample_report.png
 │
 ├── sample_data/
 │   ├── superstore.csv
@@ -405,241 +268,194 @@ AI-Data-Analyst/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+```
 
-Update the three image filenames in this section if your actual image filenames are different.
+---
 
-🚀 Installation
+# ⚙️ Installation
 
-1. Clone the Repository
+### Clone Repository
 
+```bash
 git clone https://github.com/harsh8767/AI-Data-Analyst.git
 
-2. Navigate into the Project
-
 cd AI-Data-Analyst
+```
 
-3. Create a Virtual Environment
+### Create Virtual Environment
 
-Windows
-
+```bash
 python -m venv venv
+```
+
+### Activate Virtual Environment
+
+Windows:
+
+```bash
 venv\Scripts\activate
+```
 
-Linux / macOS
+Mac/Linux:
 
-python3 -m venv venv
+```bash
 source venv/bin/activate
+```
 
-4. Install Dependencies
+### Install Dependencies
 
+```bash
 pip install -r requirements.txt
+```
 
-🔐 Environment Variables
+---
 
-Create a local .env file in the project root.
+# 🔑 Environment Variables
 
-Use .env.example as the template.
+Create a `.env` file:
+
+```env
+GOOGLE_API_KEY=YOUR_GEMINI_API_KEY
+```
 
 Example:
 
-GEMINI_API_KEY=your_api_key_here
+```env
+GOOGLE_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxx
+```
 
-Do not commit .env to GitHub.
+---
 
-The repository's .gitignore is configured to exclude the local environment file.
+# ▶️ Run Application
 
-▶️ Run the Application
-
-From the project root:
-
+```bash
 streamlit run app/app.py
+```
 
-The application will open in your browser.
+Open:
 
-📌 How to Use the Application
+```text
+http://localhost:8501
+```
 
-Step 1
+---
 
-Start the Streamlit application.
+# 📸 Screenshots
 
-Step 2
+## Application Interface
 
-Upload a CSV or Excel dataset.
+```text
+images/app-dashboard..png
+```
 
-Step 3
+## Analysis Example
 
-Review:
+```text
+images/data-analysis.png
+```
 
-Dataset overview
+## PDF Report Download
 
-Dataset preview
+```text
+images/pdf-report.png
+```
 
-Column information
+---
 
-Data quality
+# 📄 Sample Report
 
-Step 4
+A sample generated report is included:
 
-Enter a natural-language question.
-
-Example:
-
-What are the top 5 products by sales?
-
-Step 5
-
-Click:
-
-🔎 Analyze
-
-Step 6
-
-Review:
-
-Analysis result
-
-Visualization
-
-AI insight
-
-Analysis details
-
-Step 7
-
-Ask additional questions to build the current session history.
-
-Step 8
-
-Download the complete session analysis as a PDF report.
-
-📄 Sample Report
-
-A sample generated session report is included in:
-
+```text
 sample_report/
+└── ai_data_analyst_session_report.pdf
+```
 
-The report demonstrates how multiple questions, results, visualizations, and insights can be combined into one PDF.
+This demonstrates:
 
-🧪 Example Questions
+- Multi-question analysis
+- Tables
+- Visualizations
+- AI insights
+- Session-based reporting
 
-Using the Superstore dataset, try questions such as:
+---
 
-1. What are the top 5 products by sales?
+# 🔒 Security
 
-2. Which region has the highest profit?
+- API keys stored in `.env`
+- `.env` excluded via `.gitignore`
+- No database storage
+- Session history stored only in memory
+- Dataset data remains local
 
-3. What is the total sales?
+---
 
-4. Which category generates the most profit?
+# ⚡ Performance Optimizations
 
-5. Show sales by region.
+### Cached Analysis Plans
 
-You can also ask questions that require aggregations, grouping, sorting, filtering, and suitable visualizations.
+Repeated questions against the same dataset:
 
-⚡ API Usage Optimization
+- Reuse cached Gemini responses
+- Reduce API costs
+- Improve responsiveness
 
-The application is designed to avoid unnecessary AI requests where possible.
+### Local Query Execution
 
-For example:
+Only planning and insight generation require AI.
 
-Analysis-plan responses are cached for repeated questions against the same dataset.
+Data processing occurs locally using Pandas.
 
-Single-value results use a local insight instead of an additional AI insight request.
+### Limited PDF Tables
 
-Query execution and result validation happen locally.
+Large results are automatically truncated to prevent oversized PDF files.
 
-This keeps the AI component focused on tasks that benefit from natural-language understanding and insight generation.
+---
 
-🔒 Security
+# 🚧 Current Limitations
 
-The project keeps API credentials outside the source code.
+- Works only with structured tabular datasets
+- Requires a valid Gemini API key
+- Extremely large datasets may impact performance
+- Visualization recommendations depend on AI output
 
-Important files such as:
+---
 
-.env
+# 🔮 Future Improvements
 
-are excluded from version control.
+- Multi-dataset analysis
+- Advanced filtering UI
+- Dashboard generation
+- Scheduled reports
+- Cloud deployment
+- User authentication
+- Database-backed history
+- Additional chart types
+- Conversational memory
 
-Before pushing the project to GitHub, verify:
+---
 
-git status --ignored
+# 👨‍💻 Developer
 
-and make sure your real API key is not staged.
-
-⚠️ Limitations
-
-AI-generated analysis plans depend on the quality and clarity of the user's question.
-
-Very large datasets may require additional optimization.
-
-Visualization generation depends on whether the returned result is suitable for charting.
-
-PDF chart embedding depends on Plotly image-export support in the local environment.
-
-Session history is stored only in Streamlit session state and is not persisted to a database.
-
-AI-generated insights should be treated as analytical assistance and verified for important business decisions.
-
-🚀 Future Improvements
-
-Potential future enhancements include:
-
-📊 More advanced visualization types
-
-🧠 Improved analysis-plan validation
-
-🗄️ SQL/database support for large datasets
-
-💾 Persistent analysis history
-
-👥 Multi-user sessions
-
-📤 Excel result export
-
-📑 More advanced PDF report styling
-
-🔎 Follow-up questions using conversational context
-
-📈 Advanced statistical analysis
-
-🧪 Automated testing
-
-☁️ Cloud deployment
-
-🔐 Authentication and user management
-
-🙏 Acknowledgements
-
-This project makes use of the following open-source technologies:
-
-Python
-
-Pandas
-
-Streamlit
-
-Plotly
-
-ReportLab
-
-Google Gemini
-
-Git
-
-👨‍💻 Developer
-
-Harsh Chavan
+## Harsh Chavan
 
 Computer Engineering Student
 
-Passionate about Artificial Intelligence, Machine Learning, Data Analytics, Python, and Software Development.
+Passionate about **Artificial Intelligence, Machine Learning, Data Analytics, SQL, Power BI, and Python Development**.
 
-GitHub
+### GitHub
 
 https://github.com/harsh8767
 
-📜 License
+### LinkedIn
+
+https://www.linkedin.com/in/harsh-chavan-1646a2257/
+
+---
+
+# 📜 License
 
 This project is licensed under the MIT License.
 
-See the LICENSE file for more information.
+Feel free to fork, modify, and extend the project for educational and personal use.
