@@ -31,6 +31,7 @@ client = genai.Client(
 
 MODEL_NAME = "gemini-3.5-flash-lite"
 
+
 # ==================================================
 # DEFAULT CHART PLAN
 # ==================================================
@@ -79,7 +80,7 @@ def generate_analysis_plan(df, question):
     2. A visualization plan
 
     IMPORTANT:
-    Both are generated using ONE Gemini API call.
+    Both plans are generated using ONE Gemini API call.
 
     Gemini:
         Understands the user's question.
@@ -137,6 +138,8 @@ SUPPORTED ANALYSIS OPERATIONS
 
 1. aggregate
 
+Use aggregate for numerical calculations.
+
 Examples:
 
 - total sales
@@ -144,16 +147,58 @@ Examples:
 - average salary by department
 - total sales by region
 - maximum profit by region
+- minimum salary
 - top products by sales
 - bottom products by sales
 
 2. count
 
-Examples:
+Use count for:
 
 - how many rows
 - number of customers
 - count of records
+- how many employees
+- frequency of categories
+- different / unique / distinct categories
+
+Examples:
+
+- how many rows are there
+- how many employees are in the dataset
+- what are the different education fields
+- what are the unique departments
+- list the different regions
+- show unique job roles
+
+IMPORTANT:
+
+When the user asks for different, unique, distinct,
+available, or a list of categories, use:
+
+operation = "count"
+
+group_by = ["category_column"]
+
+metric = null
+
+aggregation = null
+
+For example:
+
+User:
+"What are the different education fields?"
+
+If the dataset contains "EducationField", generate:
+
+operation = "count"
+group_by = ["EducationField"]
+metric = null
+aggregation = null
+
+This produces one row for each distinct EducationField
+and a Count column showing how many records belong
+to each category.
 
 3. filter
 
@@ -161,6 +206,7 @@ Examples:
 
 - show employees from HR
 - show products with sales greater than 1000
+- show customers from California
 
 4. describe
 
@@ -224,10 +270,10 @@ For totals:
 For averages:
     aggregation = "mean"
 
-For highest values:
+For highest numerical values:
     aggregation = "max"
 
-For lowest values:
+For lowest numerical values:
     aggregation = "min"
 
 For top records:
@@ -245,16 +291,54 @@ For "top 10":
 For "bottom 5":
     limit = 5
 
+For "bottom 10":
+    limit = 10
+
 If the user asks for a total without grouping:
 
     group_by = []
 
-If the user asks for a value by category:
+If the user asks for a numerical value by category:
 
     group_by = ["category_column"]
 
+If the user asks for different, unique, distinct,
+or available categories:
+
+    operation = "count"
+
+    group_by = ["category_column"]
+
+    metric = null
+
+    aggregation = null
+
 The metric must be a numerical column when
 using aggregate operations.
+
+IMPORTANT:
+
+Do NOT use aggregate for a question that only asks
+for different, unique, distinct, or available
+categories.
+
+For example:
+
+User:
+"What are the different education fields?"
+
+Correct:
+
+operation = "count"
+group_by = ["EducationField"]
+metric = null
+aggregation = null
+
+Incorrect:
+
+operation = "aggregate"
+group_by = ["EducationField"]
+metric = null
 
 
 ==================================================
@@ -289,6 +373,7 @@ Use "bar" for:
 - category comparisons
 - top/bottom rankings
 - grouped numerical comparisons
+- category frequency/count comparisons
 
 Use "line" for:
 
@@ -314,6 +399,9 @@ IMPORTANT:
 - For pie charts, x_axis is the category.
 - For pie charts, y_axis is the numerical value.
 - For single-value questions, chart_type MUST be "none".
+- For category frequency/count results, use a bar chart.
+- For category frequency/count results, x_axis should be
+  the grouped category column and y_axis should be "Count".
 
 
 ==================================================
@@ -323,7 +411,7 @@ IMPORTANT CHART RULE
 The chart plan should match the expected output
 of the analysis plan.
 
-For example:
+Example 1:
 
 User:
 "What are the top 5 products by sales?"
@@ -342,6 +430,44 @@ Chart:
 chart_type = "bar"
 x_axis = "Product"
 y_axis = "Sales"
+
+
+Example 2:
+
+User:
+"What are the different education fields?"
+
+Analysis:
+
+operation = "count"
+group_by = ["EducationField"]
+metric = null
+aggregation = null
+
+Chart:
+
+chart_type = "bar"
+x_axis = "EducationField"
+y_axis = "Count"
+
+
+Example 3:
+
+User:
+"What are the different departments?"
+
+Analysis:
+
+operation = "count"
+group_by = ["Department"]
+metric = null
+aggregation = null
+
+Chart:
+
+chart_type = "bar"
+x_axis = "Department"
+y_axis = "Count"
 
 
 ==================================================
@@ -823,31 +949,3 @@ def generate_ai_insight(question, result):
     This means:
 
         1 user question
-        =
-        1 Gemini API request
-
-    The insight itself requires ZERO additional
-    Gemini requests.
-    """
-
-    return generate_local_insight(
-        question,
-        result,
-    )
-
-
-# ==================================================
-# BACKWARD COMPATIBILITY
-# ==================================================
-
-def generate_chart_plan(question, result):
-    """
-    Backward-compatible function.
-
-    The application should use the chart_plan returned
-    by generate_analysis_plan().
-
-    This function performs ZERO Gemini API calls.
-    """
-
-    return no_chart_plan()
