@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -69,6 +70,429 @@ def is_rate_limit_error(error):
 
 
 # ==================================================
+# NORMALIZE TEXT
+# ==================================================
+
+def normalize_text(value):
+    """
+    Normalize text for fuzzy column matching.
+    """
+
+    if value is None:
+        return ""
+
+    value = str(value).strip().lower()
+
+    # Remove punctuation.
+    value = re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        value,
+    )
+
+    # Normalize whitespace.
+    value = re.sub(
+        r"\s+",
+        " ",
+        value,
+    ).strip()
+
+    return value
+
+
+# ==================================================
+# SINGULARIZE SIMPLE WORD
+# ==================================================
+
+def simple_singularize(value):
+    """
+    Handle common singular/plural column names.
+
+    This is intentionally conservative.
+    """
+
+    value = normalize_text(value)
+
+    if value.endswith("ies"):
+        return value[:-3] + "y"
+
+    if value.endswith("ses"):
+        return value[:-2]
+
+    if value.endswith("xes"):
+        return value[:-2]
+
+    if value.endswith("zes"):
+        return value[:-2]
+
+    if value.endswith("ches"):
+        return value[:-2]
+
+    if value.endswith("shes"):
+        return value[:-2]
+
+    if value.endswith("s") and not value.endswith("ss"):
+        return value[:-1]
+
+    return value
+
+
+# ==================================================
+# FIND COLUMN FROM QUESTION
+# ==================================================
+
+def find_column_from_question(df, question):
+    """
+    Try to identify the dataset column being requested
+    from a natural-language question.
+
+    Example:
+
+        "What are the different departments?"
+
+    Dataset:
+
+        Department
+
+    Returns:
+
+        Department
+    """
+
+    question_normalized = normalize_text(question)
+
+    # --------------------------------------------------
+    # Exact normalized column match
+    # --------------------------------------------------
+
+    for column in df.columns:
+
+        column_normalized = normalize_text(column)
+
+        if column_normalized in question_normalized:
+            return column
+
+    # --------------------------------------------------
+    # Singular/plural match
+    # --------------------------------------------------
+
+    question_words = set(
+        question_normalized.split()
+    )
+
+    for column in df.columns:
+
+        column_normalized = normalize_text(column)
+
+        column_words = column_normalized.split()
+
+        if not column_words:
+            continue
+
+        singular_column = " ".join(
+            simple_singularize(word)
+            for word in column_words
+        )
+
+        singular_question_words = {
+            simple_singularize(word)
+            for word in question_words
+        }
+
+        singular_column_words = set(
+            singular_column.split()
+        )
+
+        if singular_column_words.issubset(
+            singular_question_words
+        ):
+            return column
+
+    # --------------------------------------------------
+    # Partial word match
+    # --------------------------------------------------
+
+    for column in df.columns:
+
+        column_normalized = normalize_text(column)
+
+        column_words = column_normalized.split()
+
+        for word in column_words:
+
+            singular_word = simple_singularize(word)
+
+            if singular_word in question_words:
+                return column
+
+    return None
+
+
+# ==================================================
+# DETECT DISTINCT / CATEGORY QUESTION
+# ==================================================
+
+def is_distinct_category_question(question):
+    """
+    Detect questions asking for different/unique/distinct
+    categories rather than numerical aggregation.
+    """
+
+    normalized = normalize_text(question)
+
+    patterns = [
+        r"\bdifferent\b",
+        r"\bunique\b",
+        r"\bdistinct\b",
+        r"\bavailable\b",
+        r"\bwhat categories\b",
+        r"\bwhich categories\b",
+        r"\blist\b",
+        r"\bshow all\b",
+        r"\bwhat are the\b",
+        r"\bwhat is the list\b",
+    ]
+
+    return any(
+        re.search(
+            pattern,
+            normalized,
+        )
+        for pattern in patterns
+    )
+
+
+# ==================================================
+# NORMALIZE ANALYSIS PLAN
+# ==================================================
+
+def normalize_analysis_plan(df, question, response):
+    """
+    Deterministically correct common AI planning mistakes.
+
+    In particular:
+
+        "What are the different departments?"
+
+    must become:
+
+        operation = "count"
+        group_by = ["Department"]
+        metric = None
+        aggregation = None
+
+    This protects the execution engine from Gemini
+    incorrectly selecting aggregate without a metric.
+    """
+
+    if not isinstance(response, dict):
+        return response
+
+    analysis_plan = response.get(
+        "analysis_plan"
+    )
+
+    if not isinstance(
+        analysis_plan,
+        dict
+    ):
+        return response
+
+    # --------------------------------------------------
+    # DISTINCT / DIFFERENT / UNIQUE QUESTIONS
+    # --------------------------------------------------
+
+    if is_distinct_category_question(question):
+
+        detected_column = find_column_from_question(
+            df,
+            question,
+        )
+
+        # If Gemini already identified a valid group column,
+        # prefer it.
+        existing_group_by = analysis_plan.get(
+            "group_by"
+        )
+
+        if (
+            isinstance(existing_group_by, list)
+            and existing_group_by
+            and all(
+                column in df.columns
+                for column in existing_group_by
+            )
+        ):
+
+            detected_column = existing_group_by[0]
+
+        # --------------------------------------------------
+        # If a column was identified, force COUNT.
+        # --------------------------------------------------
+
+        if detected_column:
+
+            analysis_plan["operation"] = "count"
+
+            analysis_plan["group_by"] = [
+                detected_column
+            ]
+
+            analysis_plan["metric"] = None
+
+            analysis_plan["aggregation"] = None
+
+            # Distinct category questions should not
+            # accidentally be sorted/limited by an invalid
+            # dataset column.
+            sort_by = analysis_plan.get(
+                "sort_by"
+            )
+
+            if (
+                sort_by
+                and sort_by not in df.columns
+            ):
+                analysis_plan["sort_by"] = None
+
+            # --------------------------------------------------
+            # Force correct chart
+            # --------------------------------------------------
+
+            chart_plan = response.get(
+                "chart_plan"
+            )
+
+            if not isinstance(
+                chart_plan,
+                dict
+            ):
+                chart_plan = no_chart_plan()
+
+            chart_plan["chart_type"] = "bar"
+            chart_plan["x_axis"] = detected_column
+            chart_plan["y_axis"] = "Count"
+
+            if not chart_plan.get("title"):
+                chart_plan["title"] = (
+                    f"Count by {detected_column}"
+                )
+
+            response["chart_plan"] = chart_plan
+
+    return response
+
+
+# ==================================================
+# VALIDATE RESPONSE COLUMNS
+# ==================================================
+
+def validate_analysis_response(df, response):
+    """
+    Ensure Gemini did not invent dataset columns.
+    """
+
+    if not isinstance(response, dict):
+        raise ValueError(
+            "AI response must be a dictionary."
+        )
+
+    analysis_plan = response.get(
+        "analysis_plan"
+    )
+
+    if not isinstance(
+        analysis_plan,
+        dict
+    ):
+        raise ValueError(
+            "AI response does not contain "
+            "a valid analysis plan."
+        )
+
+    # --------------------------------------------------
+    # GROUP BY
+    # --------------------------------------------------
+
+    group_by = analysis_plan.get(
+        "group_by",
+        []
+    )
+
+    if group_by is None:
+        group_by = []
+
+    for column in group_by:
+
+        if column not in df.columns:
+            raise ValueError(
+                f"AI selected invalid column '{column}'."
+            )
+
+    # --------------------------------------------------
+    # METRIC
+    # --------------------------------------------------
+
+    metric = analysis_plan.get(
+        "metric"
+    )
+
+    if metric is not None:
+
+        if metric not in df.columns:
+            raise ValueError(
+                f"AI selected invalid metric column "
+                f"'{metric}'."
+            )
+
+    # --------------------------------------------------
+    # SORT BY
+    # --------------------------------------------------
+
+    sort_by = analysis_plan.get(
+        "sort_by"
+    )
+
+    if sort_by is not None:
+
+        # Count results may use generated "Count".
+        if (
+            sort_by != "Count"
+            and sort_by not in df.columns
+        ):
+            raise ValueError(
+                f"AI selected invalid sort column "
+                f"'{sort_by}'."
+            )
+
+    # --------------------------------------------------
+    # FILTER COLUMNS
+    # --------------------------------------------------
+
+    filters = analysis_plan.get(
+        "filters",
+        []
+    )
+
+    if filters is None:
+        filters = []
+
+    for condition in filters:
+
+        column = condition.get(
+            "column"
+        )
+
+        if column not in df.columns:
+            raise ValueError(
+                f"AI selected invalid filter column "
+                f"'{column}'."
+            )
+
+    return True
+
+
+# ==================================================
 # ANALYSIS PLAN + CHART PLAN
 # ==================================================
 
@@ -79,16 +503,10 @@ def generate_analysis_plan(df, question):
     1. A structured analysis plan.
     2. A visualization plan.
 
-    Both plans are generated using ONE Gemini API call.
+    Gemini generates the initial plan.
 
-    Gemini:
-        Understands the user's question.
-
-    Pandas:
-        Executes the analysis.
-
-    Plotly:
-        Renders the visualization.
+    A deterministic normalization layer then fixes
+    common planning mistakes before execution.
     """
 
     # --------------------------------------------------
@@ -105,7 +523,7 @@ def generate_analysis_plan(df, question):
 
     schema = json.dumps(
         columns,
-        indent=2
+        indent=2,
     )
 
     # --------------------------------------------------
@@ -160,21 +578,26 @@ Use count for:
 - count of records
 - how many employees
 - frequency of categories
-- different / unique / distinct categories
-
-Examples:
-
-- how many rows are there
-- how many employees are in the dataset
-- what are the different education fields
-- what are the unique departments
-- list the different regions
-- show unique job roles
+- different categories
+- unique categories
+- distinct categories
+- available categories
+- lists of category values
 
 IMPORTANT:
 
-When the user asks for different, unique, distinct,
-available, or a list of categories, use:
+Questions containing words such as:
+
+- different
+- unique
+- distinct
+- available
+- list
+- show all
+
+usually mean the user wants category values.
+
+For these questions use:
 
 operation = "count"
 
@@ -184,21 +607,25 @@ metric = null
 
 aggregation = null
 
-For example:
+Example:
 
 User:
-"What are the different education fields?"
+"What are the different departments?"
 
-If the dataset contains "EducationField", generate:
+If the dataset contains:
+
+Department
+
+Return:
 
 operation = "count"
-group_by = ["EducationField"]
+group_by = ["Department"]
 metric = null
 aggregation = null
 
-This produces one row for each distinct EducationField
-and a Count column showing how many records belong
-to each category.
+The result will contain:
+
+Department | Count
 
 
 3. filter
@@ -223,27 +650,17 @@ Examples:
 ANALYSIS PLAN
 ==================================================
 
-Use exactly:
+Use:
 
 {{
-    "analysis_plan": {{
-        "operation": "aggregate",
-        "group_by": [],
-        "metric": null,
-        "aggregation": null,
-        "filters": [],
-        "sort_by": null,
-        "sort_order": "descending",
-        "limit": null
-    }}
-}}
-
-For filters use:
-
-{{
-    "column": "column_name",
-    "operator": "==",
-    "value": "value"
+    "operation": "aggregate",
+    "group_by": [],
+    "metric": null,
+    "aggregation": null,
+    "filters": [],
+    "sort_by": null,
+    "sort_order": "descending",
+    "limit": null
 }}
 
 Allowed filter operators:
@@ -267,96 +684,86 @@ ANALYSIS RULES
 - Do not generate SQL.
 
 For totals:
-    aggregation = "sum"
+
+aggregation = "sum"
 
 For averages:
-    aggregation = "mean"
+
+aggregation = "mean"
 
 For highest numerical values:
-    aggregation = "max"
+
+aggregation = "max"
 
 For lowest numerical values:
-    aggregation = "min"
+
+aggregation = "min"
 
 For top records:
-    sort_order = "descending"
+
+sort_order = "descending"
 
 For bottom records:
-    sort_order = "ascending"
+
+sort_order = "ascending"
 
 For "top 5":
-    limit = 5
+
+limit = 5
 
 For "top 10":
-    limit = 10
+
+limit = 10
 
 For "bottom 5":
-    limit = 5
+
+limit = 5
 
 For "bottom 10":
-    limit = 10
 
-If the user asks for a total without grouping:
+limit = 10
 
-    group_by = []
 
-If the user asks for a numerical value by category:
+==================================================
+DISTINCT CATEGORY RULE
+==================================================
 
-    group_by = ["category_column"]
+This rule is extremely important.
 
-If the user asks for different, unique, distinct,
-or available categories:
+If the user asks:
 
-    operation = "count"
+"What are the different departments?"
 
-    group_by = ["category_column"]
+"What are the unique departments?"
 
-    metric = null
+"List the departments."
 
-    aggregation = null
+"What are the available departments?"
 
-The metric must be a numerical column when
-using aggregate operations.
+"What are the distinct departments?"
 
-IMPORTANT:
+"What departments are there?"
 
-Do NOT use aggregate for a question that only asks
-for different, unique, distinct, or available
-categories.
+Then DO NOT use aggregate.
 
-For example:
-
-User:
-"What are the different education fields?"
-
-Correct:
+Use:
 
 operation = "count"
-group_by = ["EducationField"]
+
+group_by = ["Department"]
+
 metric = null
+
 aggregation = null
 
-Incorrect:
+The grouped count operation automatically produces:
 
-operation = "aggregate"
-group_by = ["EducationField"]
-metric = null
+Department | Count
 
 
 ==================================================
-VISUALIZATION PLAN
+VISUALIZATION
 ==================================================
-
-Use exactly:
-
-{{
-    "chart_plan": {{
-        "chart_type": "none",
-        "x_axis": null,
-        "y_axis": null,
-        "title": null
-    }}
-}}
 
 Allowed chart types:
 
@@ -365,112 +772,96 @@ Allowed chart types:
 - pie
 - none
 
-
-==================================================
-VISUALIZATION RULES
-==================================================
-
-Use "bar" for:
+Use bar for:
 
 - category comparisons
-- top/bottom rankings
+- rankings
 - grouped numerical comparisons
 - category frequency/count comparisons
 
-Use "line" for:
+Use line for:
 
 - time trends
 - chronological data
 
-Use "pie" only for:
+Use pie only for:
 
 - parts of a whole
 - category contribution to a total
 
-Use "none" when:
+Use none for:
 
-- the result is a single value
-- visualization does not add value
-- a chart would be misleading
-
-IMPORTANT:
-
-- x_axis MUST be an existing dataset column.
-- y_axis MUST be an existing dataset column OR "Count"
-  for category frequency results.
-- Never invent dataset column names.
-- For pie charts, x_axis is the category.
-- For pie charts, y_axis is the numerical value.
-- For single-value questions, chart_type MUST be "none".
-- For category frequency/count results, use a bar chart.
-- For category frequency/count results, x_axis should be
-  the grouped category column and y_axis should be "Count".
+- single values
+- results where visualization adds no value
 
 
-==================================================
-IMPORTANT CHART RULE
-==================================================
-
-The chart plan should match the expected output
-of the analysis plan.
-
-Example 1:
-
-User:
-"What are the top 5 products by sales?"
-
-Analysis:
-
-group_by = ["Product"]
-metric = "Sales"
-aggregation = "sum"
-sort_by = "Sales"
-sort_order = "descending"
-limit = 5
-
-Chart:
+For category frequency/count results:
 
 chart_type = "bar"
-x_axis = "Product"
-y_axis = "Sales"
 
+x_axis = grouped category column
 
-Example 2:
-
-User:
-"What are the different education fields?"
-
-Analysis:
-
-operation = "count"
-group_by = ["EducationField"]
-metric = null
-aggregation = null
-
-Chart:
-
-chart_type = "bar"
-x_axis = "EducationField"
 y_axis = "Count"
 
 
-Example 3:
+==================================================
+IMPORTANT EXAMPLES
+==================================================
+
+Example:
 
 User:
 "What are the different departments?"
 
-Analysis:
+Correct:
 
-operation = "count"
-group_by = ["Department"]
-metric = null
-aggregation = null
+{{
+    "operation": "count",
+    "group_by": ["Department"],
+    "metric": null,
+    "aggregation": null,
+    "filters": [],
+    "sort_by": null,
+    "sort_order": "descending",
+    "limit": null
+}}
 
 Chart:
 
-chart_type = "bar"
-x_axis = "Department"
-y_axis = "Count"
+{{
+    "chart_type": "bar",
+    "x_axis": "Department",
+    "y_axis": "Count",
+    "title": "Count by Department"
+}}
+
+
+Example:
+
+User:
+"What are the top 5 products by sales?"
+
+Correct:
+
+{{
+    "operation": "aggregate",
+    "group_by": ["Product"],
+    "metric": "Sales",
+    "aggregation": "sum",
+    "filters": [],
+    "sort_by": "Sales",
+    "sort_order": "descending",
+    "limit": 5
+}}
+
+Chart:
+
+{{
+    "chart_type": "bar",
+    "x_axis": "Product",
+    "y_axis": "Sales",
+    "title": "Top 5 Products by Sales"
+}}
 
 
 ==================================================
@@ -483,7 +874,7 @@ Do not include markdown.
 
 Do not include explanations.
 
-Return exactly:
+Return:
 
 {{
     "analysis_plan": {{
@@ -520,10 +911,6 @@ Return exactly:
                 "schema": {
                     "type": "object",
                     "properties": {
-
-                        # ==================================
-                        # ANALYSIS PLAN
-                        # ==================================
 
                         "analysis_plan": {
                             "type": "object",
@@ -611,10 +998,6 @@ Return exactly:
                             ]
                         },
 
-                        # ==================================
-                        # CHART PLAN
-                        # ==================================
-
                         "chart_plan": {
                             "type": "object",
                             "properties": {
@@ -683,9 +1066,26 @@ Return exactly:
 
         if "chart_plan" not in response:
 
-            response["chart_plan"] = (
-                no_chart_plan()
-            )
+            response["chart_plan"] = no_chart_plan()
+
+        # --------------------------------------------------
+        # DETERMINISTIC NORMALIZATION
+        # --------------------------------------------------
+
+        response = normalize_analysis_plan(
+            df,
+            question,
+            response,
+        )
+
+        # --------------------------------------------------
+        # VALIDATE AI RESPONSE
+        # --------------------------------------------------
+
+        validate_analysis_response(
+            df,
+            response,
+        )
 
         return response
 
@@ -701,7 +1101,7 @@ Return exactly:
             )
 
         raise RuntimeError(
-            "Unable to generate the analysis plan."
+            f"Unable to generate the analysis plan: {error}"
         )
 
 
@@ -713,20 +1113,7 @@ def generate_local_insight(question, result):
     """
     Generate an AI-style insight locally using Pandas.
 
-    IMPORTANT:
-
-    This function makes ZERO Gemini API calls.
-
-    It handles:
-
-    - single values
-    - totals
-    - averages
-    - counts
-    - grouped results
-    - rankings
-    - highest values
-    - lowest values
+    No Gemini API call is made.
     """
 
     if result.empty:
@@ -943,20 +1330,10 @@ def generate_local_insight(question, result):
 
 def generate_ai_insight(question, result):
     """
-    Generate an insight without consuming Gemini
-    API quota.
+    Generate an insight without consuming Gemini API quota.
 
-    The current free-tier optimized architecture
-    intentionally uses the local insight engine.
-
-    This means:
-
-        1 user question
-        =
-        1 Gemini API request
-
-    The insight itself requires ZERO additional
-    Gemini requests.
+    One user question therefore uses only one Gemini
+    request for the analysis plan.
     """
 
     return generate_local_insight(
