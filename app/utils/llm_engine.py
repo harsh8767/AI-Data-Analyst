@@ -76,10 +76,9 @@ def generate_analysis_plan(df, question):
     """
     Convert a natural-language question into:
 
-    1. A structured analysis plan
-    2. A visualization plan
+    1. A structured analysis plan.
+    2. A visualization plan.
 
-    IMPORTANT:
     Both plans are generated using ONE Gemini API call.
 
     Gemini:
@@ -151,6 +150,7 @@ Examples:
 - top products by sales
 - bottom products by sales
 
+
 2. count
 
 Use count for:
@@ -200,6 +200,7 @@ This produces one row for each distinct EducationField
 and a Count column showing how many records belong
 to each category.
 
+
 3. filter
 
 Examples:
@@ -207,6 +208,7 @@ Examples:
 - show employees from HR
 - show products with sales greater than 1000
 - show customers from California
+
 
 4. describe
 
@@ -394,8 +396,9 @@ Use "none" when:
 IMPORTANT:
 
 - x_axis MUST be an existing dataset column.
-- y_axis MUST be an existing dataset column.
-- Never invent column names.
+- y_axis MUST be an existing dataset column OR "Count"
+  for category frequency results.
+- Never invent dataset column names.
 - For pie charts, x_axis is the category.
 - For pie charts, y_axis is the numerical value.
 - For single-value questions, chart_type MUST be "none".
@@ -949,3 +952,31 @@ def generate_ai_insight(question, result):
     This means:
 
         1 user question
+        =
+        1 Gemini API request
+
+    The insight itself requires ZERO additional
+    Gemini requests.
+    """
+
+    return generate_local_insight(
+        question,
+        result,
+    )
+
+
+# ==================================================
+# BACKWARD COMPATIBILITY
+# ==================================================
+
+def generate_chart_plan(question, result):
+    """
+    Backward-compatible function.
+
+    The application should use the chart_plan returned
+    by generate_analysis_plan().
+
+    This function performs ZERO Gemini API calls.
+    """
+
+    return no_chart_plan()
