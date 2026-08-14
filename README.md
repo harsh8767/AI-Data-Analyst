@@ -32,6 +32,37 @@ Instead of manually writing Pandas code or SQL queries, users can interact with 
 The AI converts the user's natural-language question into a structured analysis plan. The application then executes that plan against the uploaded dataset and presents the validated result.
 
 ---
+---
+## 🚀 Live Demo
+
+### Try the application
+
+**[🌐 Open AI Data Analyst](https://ai-data-analyst-567z.onrender.com/)**
+
+Ask questions about your dataset in plain English and get analysis results, visualizations, insights, and downloadable reports.
+
+### 📄 Sample Analysis Report
+
+Want to see an example of the generated output?
+
+**[📑 View Sample Analysis Report](sample_report/ai_data_analyst_session_report.pdf)**
+
+The sample report demonstrates multiple natural-language questions, including category exploration, unique/distinct values, numerical aggregation, and grouped analysis.
+
+### 💡 Example Questions
+
+```text
+What are the different departments?
+
+What are the unique job roles?
+
+What is the average monthly income?
+
+How many employees are in each job role?
+
+What is the average monthly income by job role?
+```
+---
 
 # 🚀 Features
 
