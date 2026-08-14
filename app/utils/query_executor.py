@@ -257,9 +257,6 @@ def apply_filter(df, condition):
 
     if operator == "==":
 
-        # For numeric columns, compare numerically
-        # instead of converting everything to strings.
-
         if pd.api.types.is_numeric_dtype(series):
 
             try:
@@ -465,6 +462,85 @@ def execute_plan(df, plan):
     # ==================================================
 
     if operation == "count":
+
+        group_by = plan.get(
+            "group_by",
+            []
+        )
+
+        # --------------------------------------------------
+        # GROUPED COUNT / DISTINCT CATEGORIES
+        # --------------------------------------------------
+
+        if group_by:
+
+            result = (
+                working_df
+                .groupby(
+                    group_by,
+                    dropna=False
+                )
+                .size()
+                .reset_index(
+                    name="Count"
+                )
+            )
+
+            # --------------------------------------------------
+            # SORTING
+            # --------------------------------------------------
+
+            sort_by = plan.get(
+                "sort_by"
+            )
+
+            sort_order = plan.get(
+                "sort_order",
+                "descending"
+            )
+
+            ascending = (
+                sort_order == "ascending"
+            )
+
+            if (
+                sort_by
+                and sort_by in result.columns
+            ):
+
+                result = result.sort_values(
+                    by=sort_by,
+                    ascending=ascending,
+                )
+
+            elif "Count" in result.columns:
+
+                result = result.sort_values(
+                    by="Count",
+                    ascending=ascending,
+                )
+
+            # --------------------------------------------------
+            # LIMIT
+            # --------------------------------------------------
+
+            limit = plan.get(
+                "limit"
+            )
+
+            if limit is not None:
+
+                result = result.head(
+                    int(limit)
+                )
+
+            return result.reset_index(
+                drop=True
+            )
+
+        # --------------------------------------------------
+        # TOTAL ROW COUNT
+        # --------------------------------------------------
 
         return pd.DataFrame(
             {
