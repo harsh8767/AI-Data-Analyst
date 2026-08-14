@@ -86,7 +86,10 @@ def validate_plan(df, plan):
     # GROUP BY
     # --------------------------------------------------
 
-    group_by = plan.get("group_by", [])
+    group_by = plan.get(
+        "group_by",
+        []
+    )
 
     if group_by is None:
         group_by = []
@@ -106,7 +109,9 @@ def validate_plan(df, plan):
     # METRIC
     # --------------------------------------------------
 
-    metric = plan.get("metric")
+    metric = plan.get(
+        "metric"
+    )
 
     if metric:
         validate_column(
@@ -118,7 +123,9 @@ def validate_plan(df, plan):
     # SORT BY
     # --------------------------------------------------
 
-    sort_by = plan.get("sort_by")
+    sort_by = plan.get(
+        "sort_by"
+    )
 
     if sort_by:
         validate_column(
@@ -140,14 +147,17 @@ def validate_plan(df, plan):
         "descending",
     }:
         raise ValueError(
-            "sort_order must be 'ascending' or 'descending'."
+            "sort_order must be "
+            "'ascending' or 'descending'."
         )
 
     # --------------------------------------------------
     # AGGREGATION
     # --------------------------------------------------
 
-    aggregation = plan.get("aggregation")
+    aggregation = plan.get(
+        "aggregation"
+    )
 
     if (
         aggregation
@@ -216,7 +226,9 @@ def validate_plan(df, plan):
     # LIMIT
     # --------------------------------------------------
 
-    limit = plan.get("limit")
+    limit = plan.get(
+        "limit"
+    )
 
     if limit is not None:
 
@@ -320,7 +332,7 @@ def apply_filter(df, condition):
         ]
 
     # --------------------------------------------------
-    # NUMERIC COMPARISONS
+    # NUMERIC / ORDER COMPARISONS
     # --------------------------------------------------
 
     try:
@@ -387,8 +399,6 @@ def apply_filters(df, filters):
             condition
         )
 
-        # Stop early if no rows remain.
-
         if working_df.empty:
             break
 
@@ -408,7 +418,7 @@ def execute_plan(df, plan):
     """
 
     # --------------------------------------------------
-    # VALIDATE
+    # VALIDATE PLAN
     # --------------------------------------------------
 
     validate_plan(
@@ -469,7 +479,13 @@ def execute_plan(df, plan):
         )
 
         # --------------------------------------------------
-        # GROUPED COUNT / DISTINCT CATEGORIES
+        # GROUPED COUNT
+        #
+        # Used for questions such as:
+        #
+        # "What are the different departments?"
+        # "What are the unique education fields?"
+        # "How many employees are in each department?"
         # --------------------------------------------------
 
         if group_by:
@@ -503,6 +519,7 @@ def execute_plan(df, plan):
                 sort_order == "ascending"
             )
 
+            # Explicit sort column
             if (
                 sort_by
                 and sort_by in result.columns
@@ -513,7 +530,8 @@ def execute_plan(df, plan):
                     ascending=ascending,
                 )
 
-            elif "Count" in result.columns:
+            # Default grouped-count sorting
+            else:
 
                 result = result.sort_values(
                     by="Count",
@@ -540,6 +558,11 @@ def execute_plan(df, plan):
 
         # --------------------------------------------------
         # TOTAL ROW COUNT
+        #
+        # Used for questions such as:
+        #
+        # "How many employees are there?"
+        # "How many records are in the dataset?"
         # --------------------------------------------------
 
         return pd.DataFrame(
@@ -556,14 +579,20 @@ def execute_plan(df, plan):
 
     if operation == "filter":
 
-        limit = plan.get("limit")
+        limit = plan.get(
+            "limit"
+        )
 
         if limit is not None:
 
             return (
                 working_df
-                .head(int(limit))
-                .reset_index(drop=True)
+                .head(
+                    int(limit)
+                )
+                .reset_index(
+                    drop=True
+                )
             )
 
         return working_df.reset_index(
@@ -589,14 +618,20 @@ def execute_plan(df, plan):
             "aggregation"
         )
 
+        # --------------------------------------------------
+        # VALIDATE AGGREGATION
+        # --------------------------------------------------
+
         if not metric:
             raise ValueError(
-                "An aggregation requires a metric column."
+                "An aggregation requires "
+                "a metric column."
             )
 
         if not aggregation:
             raise ValueError(
-                "An aggregation function is required."
+                "An aggregation function "
+                "is required."
             )
 
         # --------------------------------------------------
@@ -615,14 +650,18 @@ def execute_plan(df, plan):
 
             return pd.DataFrame(
                 {
-                    metric: [0]
+                    metric: [
+                        0
+                    ]
                     if aggregation == "sum"
-                    else [None]
+                    else [
+                        None
+                    ]
                 }
             )
 
         # --------------------------------------------------
-        # COUNT
+        # COUNT AGGREGATION
         # --------------------------------------------------
 
         if aggregation == "count":
@@ -695,7 +734,9 @@ def execute_plan(df, plan):
                         group_by,
                         dropna=False
                     )[metric]
-                    .agg(aggregation)
+                    .agg(
+                        aggregation
+                    )
                     .reset_index()
                 )
 
@@ -743,7 +784,7 @@ def execute_plan(df, plan):
         )
 
         # --------------------------------------------------
-        # Explicit sort column
+        # EXPLICIT SORT COLUMN
         # --------------------------------------------------
 
         if (
@@ -757,7 +798,7 @@ def execute_plan(df, plan):
             )
 
         # --------------------------------------------------
-        # Automatic sorting
+        # AUTOMATIC SORTING
         # --------------------------------------------------
 
         else:
