@@ -376,7 +376,7 @@ http://localhost:8501
 ## Application Interface
 
 <p align="center">
-  <img src="./images/app-dashboard.png" alt="Application Interface" width="900"/>
+  <img src="./images/app-dashboard..png" alt="Application Interface" width="900"/>
 </p>
 
 ## Analysis Example
